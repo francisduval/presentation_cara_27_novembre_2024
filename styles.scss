@@ -20,6 +20,8 @@ $code-color:   #000000;
 $selection-bg: $theme-darkgreen;
 $link-color:   $theme-darkblue;
 
+$font-size-normal-text: 30px;
+
 
 /*-- scss:rules --*/
 
@@ -48,7 +50,12 @@ $link-color:   $theme-darkblue;
 
 // Normal text
 .reveal p {
-  font-size: 35px !important;
+  font-size: $font-size-normal-text !important;
+}
+
+// Normal text in lists
+.reveal .slide ul {
+  font-size: $font-size-normal-text !important;
 }
 
 // Code text

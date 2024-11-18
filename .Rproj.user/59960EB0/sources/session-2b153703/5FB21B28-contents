@@ -25,6 +25,12 @@ editor:
     wrap: 72
 ---
 
+## Histoire
+
+Les grands modèles de langage de type « encodeurs » permettent d'encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l'architecture *transformers*, qui comprend un « mécanisme d'auto-attention (self-attention mechanism) », développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d'auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l'encodage de phrases, car il permet, grâce à son architecture siamoise, d'obtenir de meilleurs embeddings et d'accélérer le calcul des similarités.
+
+Lorsqu'une entreprise s'assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n'est parfois pas évident puisque ces codes sont au nombre d'environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d'abord téléchargé le modèle pré-entrainé que nous avons finetuné sur un jeu de données interne. Le modèle entrainé permet d'obtenir, pour n'importe quelle description d'entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l'aide d'un algorithme des k plus proches voisins.
+
 ## Représentation vectorielle (embedding)
 
 ::: {.callout-note appearance="simple"}
@@ -36,19 +42,66 @@ Une manière de convertir une chaine de caractères en **nombres** sous forme d'
 
 ## Représentation vectorielle (embedding)
 
-- Un vecteur seul n'a pas de signification.
-- Ce sont les vecteurs pris ensemble qui ont du sens.
+- Un bon modèle d'embedding va positionner les mots (ou phrases) de sens similaire « près » les uns des autres dans l'espace d'embedding.
+- Dans cet exemple, nous avons un embedding en 2 dimensions, mais en pratique, les embeddings possèdent généralement un nombre beaucoup plus élevé de dimensions.
 
 ![](images/embeddings_2.png)
 
 
-## Aperçu de Sentence-BERT
+## Transformer
+
+![](images/transformer-encoder.png)
+
+## Mécanisme d'attention
+
+
+::: columns
+
+::: {.column width='40%'}
+![](images/attention.png){width="80%"}
+:::
+
+::: {.column width='60%'}
+![](images/attention-luis.png){width="100%"}
+:::
+
+:::
+
+
+
+
+
+## Architecture de Sentence-BERT
+
+![](images/BERT-architecture.png)
 
 
 ## HuggingFace
 
 - A démocratisé l'utilisation des LLMs en rendant accessible leur utilisation et en fournissant une interface égale.
 
+
+
+## BERT
+
+- BERT is trained using masked language modeling and next sentence prediction. But it was shown that next sentence prediction doesn't help that much.
+- Entrainé entre autres sur tout le Wikipédia anglais
+- BERT: un embedding est obtenu pour chaque mot de la phrase. Ensuite, pour obtenir un embedding de la phrase, on va sommariser les embeddings (typiquement, en prenant la moyenne ou en gardant l'embedding du token [CLS] qui indique le début de la phrase).
+- SBERT permet de générer des embeddings fixes pour chaque phrase, ce qui permet de rapidement calculer des distances entre un grand nombre de phrases. Avec d'autres modèles comme BERT, il est nécessaire de traiter chaque phrase ensemble, ce qui est très coûteux en termes de temps de calcul.
+
+
+## BERT (2)
+
+**BERT**
+
+- Requiert de concaténer 2 phrases pour ensuite les passer dans le modèle pour obtenir une similarité (ex: [CLS] Sentence1 [SEP] Sentence2 [SEP]).
+- Cela est computationellement coûteux et pas adapté lorsqu'il y a beaucoup de comparaisons à faire.
+
+
+**SBERT**
+
+- Encode chaque phrase indépendamment en un vecteur de dimension fixe. La similarité entre 2 phrases peut ensuite être calculée, par exemple en calculant le cosinus de l'angle entre les 2 phrases (similarité cosinus).
+- Cela réduit considérablement le temps de calcul, car on n'a pas à repasser les phrases à chaque fois dans le modèle.
 
 
 ## Objectifs de la présentation
@@ -67,6 +120,17 @@ Une manière de convertir une chaine de caractères en **nombres** sous forme d'
 
 ## Applications possibles
 
+- Extraction de features pour ensuite utiliser dans un modèle de machine learning.
+- Groupement de documents (classification de texte).
+- Résolution d'entités (lorsqu'on n'a pas d'identifiant unique)
+- Question-réponse (trouver une réponse pertinente dans une base de connaissances à partir d'une question donnée)
+- Recherche sémantique
+
+## Modèle de suggestion de code IBC
+
+- SBERT pour obtenir un embedding de la description.
+- Ensuite, KNN sur les embeddings.
+
 ## HuggingFace
 
 
@@ -80,5 +144,14 @@ Une manière de convertir une chaine de caractères en **nombres** sous forme d'
 ## Notes
 
 - Les LLM's sont des modèles qui permettent aux ordinateurs de « comprendre » du texte (alors qu'au fond, ils ne peuvent comprendre que des nombres)
+
+
+
+## Ressources
+
+[https://jalammar.github.io/illustrated-transformer/](The Illustrated Transformer -- Jay Alammar)
+[https://www.youtube.com/watch?v=OxCpWwDCDFQ](The Attention Mechanism in Large Language Models -- Luis Serrano)
+
+
 
 

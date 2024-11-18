@@ -343,6 +343,11 @@ Francis Duval, Research Scientist | Co-operators
   <p class="date">16 novembre 2024</p>
 
 </section>
+<section id="histoire" class="slide level2">
+<h2>Histoire</h2>
+<p>Les grands modèles de langage de type « encodeurs » permettent d’encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l’architecture <em>transformers</em>, qui comprend un « mécanisme d’auto-attention (self-attention mechanism) », développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d’auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l’encodage de phrases, car il permet, grâce à son architecture siamoise, d’obtenir de meilleurs embeddings et d’accélérer le calcul des similarités.</p>
+<p>Lorsqu’une entreprise s’assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n’est parfois pas évident puisque ces codes sont au nombre d’environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d’abord téléchargé le modèle pré-entrainé que nous avons finetuné sur un jeu de données interne. Le modèle entrainé permet d’obtenir, pour n’importe quelle description d’entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l’aide d’un algorithme des k plus proches voisins.</p>
+</section>
 <section id="représentation-vectorielle-embedding" class="slide level2">
 <h2>Représentation vectorielle (embedding)</h2>
 <div class="callout callout-note callout-captioned callout-style-simple">
@@ -363,18 +368,55 @@ Francis Duval, Research Scientist | Co-operators
 <section id="représentation-vectorielle-embedding-1" class="slide level2">
 <h2>Représentation vectorielle (embedding)</h2>
 <ul>
-<li>Un vecteur seul n’a pas de signification.</li>
-<li>Ce sont les vecteurs pris ensemble qui ont du sens.</li>
+<li>Un bon modèle d’embedding va positionner les mots (ou phrases) de sens similaire « près » les uns des autres dans l’espace d’embedding.</li>
+<li>Dans cet exemple, nous avons un embedding en 2 dimensions, mais en pratique, les embeddings possèdent généralement un nombre beaucoup plus élevé de dimensions.</li>
 </ul>
 
 <img data-src="images/embeddings_2.png" class="r-stretch"></section>
-<section id="aperçu-de-sentence-bert" class="slide level2">
-<h2>Aperçu de Sentence-BERT</h2>
+<section id="transformer" class="slide level2">
+<h2>Transformer</h2>
+
+<img data-src="images/transformer-encoder.png" class="r-stretch"></section>
+<section id="mécanisme-dattention" class="slide level2">
+<h2>Mécanisme d’attention</h2>
+<div class="columns">
+<div class="column" style="width:40%;">
+<p><img data-src="images/attention.png" style="width:80.0%"></p>
+</div><div class="column" style="width:60%;">
+<p><img data-src="images/attention-luis.png" style="width:100.0%"></p>
+</div>
+</div>
 </section>
+<section id="architecture-de-sentence-bert" class="slide level2">
+<h2>Architecture de Sentence-BERT</h2>
+
+<img data-src="images/BERT-architecture.png" class="r-stretch"></section>
 <section id="huggingface" class="slide level2">
 <h2>HuggingFace</h2>
 <ul>
 <li>A démocratisé l’utilisation des LLMs en rendant accessible leur utilisation et en fournissant une interface égale.</li>
+</ul>
+</section>
+<section id="bert" class="slide level2">
+<h2>BERT</h2>
+<ul>
+<li>BERT is trained using masked language modeling and next sentence prediction. But it was shown that next sentence prediction doesn’t help that much.</li>
+<li>Entrainé entre autres sur tout le Wikipédia anglais</li>
+<li>BERT: un embedding est obtenu pour chaque mot de la phrase. Ensuite, pour obtenir un embedding de la phrase, on va sommariser les embeddings (typiquement, en prenant la moyenne ou en gardant l’embedding du token [CLS] qui indique le début de la phrase).</li>
+<li>SBERT permet de générer des embeddings fixes pour chaque phrase, ce qui permet de rapidement calculer des distances entre un grand nombre de phrases. Avec d’autres modèles comme BERT, il est nécessaire de traiter chaque phrase ensemble, ce qui est très coûteux en termes de temps de calcul.</li>
+</ul>
+</section>
+<section id="bert-2" class="slide level2">
+<h2>BERT (2)</h2>
+<p><strong>BERT</strong></p>
+<ul>
+<li>Requiert de concaténer 2 phrases pour ensuite les passer dans le modèle pour obtenir une similarité (ex: [CLS] Sentence1 [SEP] Sentence2 [SEP]).</li>
+<li>Cela est computationellement coûteux et pas adapté lorsqu’il y a beaucoup de comparaisons à faire.</li>
+</ul>
+<p><strong>SBERT</strong></p>
+<ul>
+<li>Encode chaque phrase indépendamment en un vecteur de dimension fixe. La similarité entre 2 phrases peut ensuite être calculée, par exemple en calculant le cosinus de l’angle entre les 2 phrases (similarité cosinus).</li>
+<li>Cela réduit considérablement le temps de calcul, car on n’a pas à repasser les phrases à chaque fois dans le modèle.</li>
 </ul>
 </section>
 <section id="objectifs-de-la-présentation" class="slide level2">
@@ -400,6 +442,20 @@ Francis Duval, Research Scientist | Co-operators
 </section>
 <section id="applications-possibles" class="slide level2">
 <h2>Applications possibles</h2>
+<ul>
+<li>Extraction de features pour ensuite utiliser dans un modèle de machine learning.</li>
+<li>Groupement de documents (classification de texte).</li>
+<li>Résolution d’entités (lorsqu’on n’a pas d’identifiant unique)</li>
+<li>Question-réponse (trouver une réponse pertinente dans une base de connaissances à partir d’une question donnée)</li>
+<li>Recherche sémantique</li>
+</ul>
+</section>
+<section id="modèle-de-suggestion-de-code-ibc" class="slide level2">
+<h2>Modèle de suggestion de code IBC</h2>
+<ul>
+<li>SBERT pour obtenir un embedding de la description.</li>
+<li>Ensuite, KNN sur les embeddings.</li>
+</ul>
 </section>
 <section id="huggingface-1" class="slide level2">
 <h2>HuggingFace</h2>
@@ -419,6 +475,10 @@ Francis Duval, Research Scientist | Co-operators
 <ul>
 <li>Les LLM’s sont des modèles qui permettent aux ordinateurs de « comprendre » du texte (alors qu’au fond, ils ne peuvent comprendre que des nombres)</li>
 </ul>
+</section>
+<section id="ressources" class="slide level2">
+<h2>Ressources</h2>
+<p><a href="The%20Illustrated%20Transformer%20--%20Jay%20Alammar">https://jalammar.github.io/illustrated-transformer/</a> <a href="The%20Attention%20Mechanism%20in%20Large%20Language%20Models%20--%20Luis%20Serrano">https://www.youtube.com/watch?v=OxCpWwDCDFQ</a></p>
 
 <img src="images/logo_blue_2.png" class="slide-logo r-stretch"><div class="footer footer-default">
 <p><a href="https://github.com/francisduval/quarto_slides_cara_coop">https://github.com/francisduval/quarto_slides_cara_coop</a></p>
