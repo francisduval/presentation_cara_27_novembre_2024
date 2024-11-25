@@ -327,7 +327,7 @@
 
 <section id="title-slide" class="quarto-title-block title-slide-theme-1 center">
   <h1 class="title">Sentence-BERT</h1>
-  <p class="subtitle">Un puissant modèle de language pour l’encodage de phrases</p>
+  <p class="subtitle">Une application à un problème de classification d’entreprises</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -340,71 +340,588 @@ Francis Duval, Research Scientist | Co-operators
 </div>
 </div>
 
-  <p class="date">16 novembre 2024</p>
+  <p class="date">27 novembre 2024</p>
 
 </section>
-<section id="histoire" class="slide level2">
-<h2>Histoire</h2>
-<p>Les grands modèles de langage de type « encodeurs » permettent d’encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l’architecture <em>transformers</em>, qui comprend un « mécanisme d’auto-attention (self-attention mechanism) », développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d’auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l’encodage de phrases, car il permet, grâce à son architecture siamoise, d’obtenir de meilleurs embeddings et d’accélérer le calcul des similarités.</p>
-<p>Lorsqu’une entreprise s’assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n’est parfois pas évident puisque ces codes sont au nombre d’environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d’abord téléchargé le modèle pré-entrainé que nous avons finetuné sur un jeu de données interne. Le modèle entrainé permet d’obtenir, pour n’importe quelle description d’entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l’aide d’un algorithme des k plus proches voisins.</p>
+<section id="résumé-de-la-présentation" class="slide level2">
+<h2>Résumé de la présentation</h2>
+<h3 id="sentence-bert">Sentence-BERT</h3>
+<ul>
+<li>Embeddings</li>
+<li>BERT</li>
+<li>Mécanisme d’attention</li>
+<li>Pré-entrainement et fine-tuning</li>
+<li>Sentence-BERT</li>
+</ul>
+<h3 id="application-au-problème-de-classification-des-entreprises">Application au problème de classification des entreprises</h3>
+<ul>
+<li>Télécharger le modèle pré-entrainé</li>
+<li>Fine-tuning sur nos données</li>
+<li>Algorithme KNN pour la classification</li>
+<li>Résultats et outil pour les souscripteurs</li>
+</ul>
+<aside class="notes">
+<ul>
+<li><p>La première partie vise à vous familiariser avec Sentence-BERT, un modèle de langage qui permet d’obtenir des représentations vectorielles (ou embeddings) de phrases.</p></li>
+<li><p>Donc on va parler d’embeddings, de BERT (qui est un modèle d’embedding de mots développé par Google) et du mécanisme d’attention, qui est central dans tous les modèles de langage modernes.</p></li>
+<li><p>On va ensuite regarder comment BERT est pré-entrainé, et comment on peut le fine-tuner pour l’adapter à une tâche particulière.</p></li>
+<li><p>Finalement, on va voir comment Sentence-BERT permet d’obtenir des embeddings de phrases en se basant sur BERT.</p></li>
+<li><p>Dans la deuxième partie, on va voir comment on a utilisé Sentence-BERT comme base pour bâtir un modèle de classification d’entreprises.</p></li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
-<section id="représentation-vectorielle-embedding" class="slide level2">
-<h2>Représentation vectorielle (embedding)</h2>
-<div class="callout callout-note callout-captioned callout-style-simple">
+<section>
+<section id="sentence-bert-1" class="title-slide slide level1 center">
+<h1>1. Sentence-BERT</h1>
+
+</section>
+<section id="embeddings" class="slide level2">
+<h2>Embeddings</h2>
+<h3 id="encoder-une-chaine-de-caractères-avec-un-vecteur-de-nombres-réels">Encoder une chaine de caractères avec un vecteur de nombres réels</h3>
+
+<img data-src="images/embeddings.jpg" class="r-stretch"><div class="callout callout-warning callout-style-simple">
 <div class="callout-body">
-<div class="callout-caption">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Représentation vectorielle</strong></p>
-</div>
 <div class="callout-content">
-<p>Une manière de convertir une chaine de caractères en <strong>nombres</strong> sous forme d’un <strong>vecteur</strong>.</p>
+<p>En français, souvent traduit par <strong>plongement</strong> ou <strong>représentation vectorielle</strong>.</p>
 </div>
 </div>
 </div>
-
-<img data-src="images/embeddings.jpg" class="r-stretch"></section>
-<section id="représentation-vectorielle-embedding-1" class="slide level2">
-<h2>Représentation vectorielle (embedding)</h2>
+<aside class="notes">
+<ul>
+<li>Un embedding, c’est simplement une chaine de caractères encodée sous forme d’un vecteur.</li>
+<li>Ça peut être n’importe quelle chaine de caractères: un mot, un token, une phrase, un document, etc.</li>
+<li>Important parce qu’un ordinateur ne peut pas traiter du texte, seulement des nombres.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="embeddings-1" class="slide level2">
+<h2>Embeddings</h2>
+<h3 id="espace-dembedding">Espace d’embedding</h3>
 <ul>
 <li>Un bon modèle d’embedding va positionner les mots (ou phrases) de sens similaire « près » les uns des autres dans l’espace d’embedding.</li>
 <li>Dans cet exemple, nous avons un embedding en 2 dimensions, mais en pratique, les embeddings possèdent généralement un nombre beaucoup plus élevé de dimensions.</li>
 </ul>
 
-<img data-src="images/embeddings_2.png" class="r-stretch"></section>
-<section id="transformer" class="slide level2">
-<h2>Transformer</h2>
+<img data-src="images/embeddings_2.png" class="r-stretch"><aside class="notes">
+<ul>
+<li>Un bon modèle d’embeddings, c’est un modèle qui va placer des mots de sens similaire proches dans l’espace d’embeddings. À l’inverse, les mots de sens non-similaire doivent être éloignés.</li>
+<li>Ici par exemple, on a obtenu un embedding en 2D pour les mots « roi », « reine », « pomme » et « banane ».</li>
+<li>On voit que les embeddings créés semblent avoir du sens puisque « roi » et « reine », qui ont des sens similaires, sont proches dans l’espace d’embedding. Les embeddings de « pomme » et « banane » sont également proches, tandis que les 2 fruits et les 2 personnes sont éloignés.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="embeddings-2" class="slide level2">
+<h2>Embeddings</h2>
+<h3 id="interprétation-des-dimensions">« Interprétation » des dimensions</h3>
+<p><br> <br> <br> <br></p>
+<ul>
+<li>Les valeurs des embeddings peuvent être imaginées étant des « concepts »</li>
+<li>Par exemple, une des dimensions pourraient être le degré de « félinité »</li>
+<li>En pratique, ces concepts sont obscures et pas humainement identifiables</li>
+</ul>
+<p><img data-src="images/embeddings_as_concepts.png" class="absolute" style="top: 100px; right: 0px; "></p>
+<aside class="notes">
+<ul>
+<li>On peut avoir une pseudo-interprétation pour les dimensions des embeddings.</li>
+<li>Donc ici, on a des embeddings en 7 dimensions de plusieurs mots, et on peut s’imaginer que chaque dimension correspond à un concept.</li>
+<li>Donc peut-être que la dimension 1 correspond au degré de « vie », la dimension 2 correspond au degré de « félinité », la troisième au degré d’humanité, etc.</li>
+<li>Par exemple, le chat et le chaton ont un haut degré de félinité, tandis que la maison a un faible degré de félinité.</li>
+<li>En pratique par contre, on ne peut pas vraiment associer chaque dimension à un concept qu’on peut interpréter, comme ici avec le degré de « vivant » et de « félinité ».</li>
+<li>Par contre, ça reste que chaque dimension est associée à un concept dont le modèle peut utiliser.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="pourquoi-bert" class="slide level2">
+<h2>Pourquoi BERT?</h2>
+<h3 id="fournit-des-embeddings-de-mots-contextualisés-de-haute-qualité">Fournit des embeddings de mots contextualisés de haute qualité</h3>
+<p><img data-src="images/bert_puppet.png" class="absolute" style="top: 164px; right: 30px; width: 350px; "></p>
+<div width="100%">
+<p><br></p>
+<ul>
+<li>BERT: <strong>B</strong>idirectional <strong>E</strong>ncoder <strong>R</strong>epresentations from <strong>T</strong>ransformers</li>
+<li>Développé par <strong><span style="color:#174EA6;">G</span><span style="color:#A50E0E;">o</span><span style="color:#FBBC04;">o</span><span style="color:#174EA6;">g</span><span style="color:#0D652D;">l</span><span style="color:#A50E0E;">e</span></strong> en 2018</li>
+</ul>
+</div>
+<p><br></p>
+<div class="columns">
+<div class="column" style="width:33%;">
+<p><span class="three-green-blocks">Pré-entrainé sur beaucoup de texte</span></p>
+<div style="height:70px;">
 
-<img data-src="images/transformer-encoder.png" class="r-stretch"></section>
+</div>
+<div class="ul-font-size-small">
+<ul>
+<li>BERT base: BooksCorpus (~800M mots)<br>
+</li>
+<li>BERT large: Wikipédia anglais (~2500M mots)</li>
+<li>Permet d’obtenir de bonnes performances même sans fine-tuning</li>
+</ul>
+</div>
+</div><div class="column" style="width:33%;">
+<p><span class="three-green-blocks">Embeddings contextualisés</span></p>
+<div style="height:70px;">
+
+</div>
+<div class="ul-font-size-small">
+<ul>
+<li>Contexte bidirectionnel<br>
+</li>
+<li>D’anciens modèles comme Word2Vec et GloVe ne prenaient pas du tout en compte le contexte</li>
+</ul>
+</div>
+</div><div class="column" style="width:33%;">
+<p><span class="three-green-blocks">Open-source</span></p>
+<div style="height:70px;">
+
+</div>
+<div class="ul-font-size-small">
+<ul>
+<li>On peut le télécharger gratuitement sur <a href="HuggingFace.co">HuggingFace.co</a></li>
+<li>On peut le fine-tuner sur une tâche particulière</li>
+</ul>
+</div>
+</div>
+</div>
+<aside class="notes">
+<ul>
+<li><p>Le modèle qui sert de base à notre modèle Sentence-BERT d’embedding de phrases s’appelle BERT.</p></li>
+<li><p>C’est un modèle qui a été développé par Google et qui permet d’obtenir des embeddings de mots (ou plutôt de tokens).</p></li>
+<li><p>C’est un modèle qu’on dit « encoder-only », parce que contrairement à des modèles génératifs comme GPT, on utilise seulement la partie « encodeuse » du transformer.</p></li>
+<li><p>Donc le but n’est pas de générer du texte, mais seulement d’obtenir des embeddings de mots.</p></li>
+<li><p>C’est un modèle puissant pour 2 raisons principales.</p></li>
+<li><p>Premièrement, il a été pré-entrainé sur énormément de texte (sur plus de 3 milliards de mots), ce qui fait qu’il peut être utilisé directement sans être fine-tuné.</p></li>
+<li><p>Deuxièmement, c’est un modèle basé sur l’architecture transformer, qui permet d’obtenir des embeddings contextualisés de haute qualité, tout en étant hautement paraléllisable.</p></li>
+<li><p>C’est un modèle open-source, donc n’importe qui peut le télécharger et l’utiliser directement, ou bien le fine-tuner sur une tâche particulière.</p></li>
+<li><p>J’ajouterais également que BERT est relativement léger avec ses 110 millions de paramètres pour la version de base, ce qui permet de rapidement obtenir des embeddings, même sur un laptop.</p></li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="architecture-de-bert" class="slide level2">
+<h2>Architecture de BERT</h2>
+<h3 id="une-pile-dencodeurs-transformer">Une pile d’encodeurs « transformer »</h3>
+<ul>
+<li>BERT est un réseau de neurones composé de 12 (BERT base) ou 24 (BERT large) modules de type «&nbsp;transformer&nbsp;» (partie « encodeur » seulement).</li>
+</ul>
+<p><span class="absolute" style="top: 650px; left: 50px; ">Transformer (ENCODER)</span></p>
+<p><img data-src="images/transformer-encoder.png" class="absolute" style="top: 265px; left: 50px; width: 200px; "></p>
+<p><img data-src="images/bert-base-bert-large-encoders.png" class="absolute" style="top: 240px; left: 500px; width: 700px; "></p>
+<aside class="notes">
+<ul>
+<li>L’architecture de BERT ressemble à ça. En gros, c’est un pile de blocs « transformer », plus précisément la partie « encodeuse » seulement.</li>
+<li>La version de base contient 12 de ces blocs, tandis que la grande version en a 24.</li>
+<li>Donc un bloc transformer, ça ressemble à ça. En gros, ça reçoit un input et ça va le passer à travers plusieurs fonctions mathématiques, dont l’attention multi-tête, qui est la clé pour comprendre le contexte de mots (je vais parler du mécanisme d’attention dans la prochaine slide).</li>
+<li>Donc ce que le modèle fait en gros, c’est qu’il va partir d’un embedding fixe non-contextualisé (disons le embedding du mot « apple ») qu’il va passer à travers tous les blocs transformer pour obtenir un embedding de « apple » contextualisé.</li>
+<li>Et le rôle des blocs transformers en fait, c’est de modifier le embedding de « apple » en utilisant les embeddings de tous les mots qui sont autour du mot « apple ».</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
 <section id="mécanisme-dattention" class="slide level2">
 <h2>Mécanisme d’attention</h2>
+<h3 id="permet-de-contextualiser-les-embeddings">Permet de contextualiser les embeddings</h3>
 <div class="columns">
 <div class="column" style="width:40%;">
 <p><img data-src="images/attention.png" style="width:80.0%"></p>
 </div><div class="column" style="width:60%;">
-<p><img data-src="images/attention-luis.png" style="width:100.0%"></p>
+<p><br> <br> <img data-src="images/attention-luis.png" style="width:100.0%"></p>
 </div>
 </div>
+<aside class="notes">
+<ul>
+<li>Le mécanisme d’attention, ça a été développé en 2017 dans l’article « Attention is all you need », et c’est grâce à ça qu’on a aujourd’hui des grands modèles de langage comme BERT, GPT, Llama ou Gemini.</li>
+<li>En plus de bien capturer le contexte des mots, c’est une architecture qui est hautement parallélisable et qui permet donc d’entrainer rapidement les modèles si on a un GPU.</li>
+<li>Donc comme je vous disais, c’est le mécanisme d’attention dans le transformer qui permet de modifier les embeddings des mots en utilisant les embeddings des mots voisins, et ça fait ça en utilisant un mécanisme assez complexe.</li>
+<li>Donc supposons qu’on a un embedding non-contextualisé pour le mot « apple ». C’est un peu tannant, parce que « apple » peut désigner soit le fruit, soit la compagnie.</li>
+<li>Ce que l’attention fait, c’est qu’elle va faire bouger l’embedding de « apple » en utilisant les mots autour.</li>
+<li>Par exemple, dans la phrase « please buy me an apple and an orange », on a le mot « orange » qui va tirer le mot « apple » vers lui, ce qui va nous créer un embedding de « apple » spécialement fait pour cette phrase.</li>
+<li>De la même manière, dans la phrase « apple unveiled the new phone », l’embedding de « apple » va être tiré vers l’embedding du mot « phone », et donc dans cette phrase, « apple » a plus de chance d’être interprété comme étant la compagnie Apple.</li>
+<li>Il faut noter que « apple » (ainsi que tous les autres mots dans la fenêtre de contexte) va être influencé par tous les autres mots dans la fenêtre de contexte.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
-<section id="architecture-de-sentence-bert" class="slide level2">
-<h2>Architecture de Sentence-BERT</h2>
+<section id="pré-entrainement-vs-fine-tuning" class="slide level2">
+<h2>Pré-entrainement vs fine-tuning</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<p><strong>Pré-entrainement</strong><br>
+<img data-src="images/pretraining.png" style="width:80.0%" data-fig-align="center"></p>
+</div><div class="column" style="width:50%;">
+<p><strong>Fine-tuning</strong><br>
+<img data-src="images/finetuning.png" style="width:78.0%" data-fig-align="center"></p>
+</div>
+</div>
+<aside class="notes">
+<ul>
+<li><p>Donc je vous ai parlé de pré-entrainement et de fine-tuning. À quoi ça correspond exactement?</p></li>
+<li><p>Le pré-entrainement, ça se résume à faire apprendre la langue au modèle. Donc les patterns de la langue, la grammaire, la syntaxe, etc.</p></li>
+<li><p>Pour ce faire, on va entrainer le modèle sur des grandes quantités de texte. Donc par exemple, sur Wikipédia au grand complet.</p></li>
+<li><p>Et pour BERT, la méthode utilisée pour le pré-entrainer s’appelle <em>masked language modeling</em>. Ça consiste à cacher certain mots au modèle de manière aléatoire, et on demande au modèle de deviner le mot. On a ensuite une fonction de perte qui va punir le modèle pour ses erreurs, et avec la rétro-propagation et la descente de gradient, on peut aller mettre à jour les poids du modèle.</p></li>
+<li><p>On peut utiliser le modèle pré-entrainé directement, mais on va avoir de meilleures performances si on le fine-tune sur notre tâche à accomplir.</p></li>
+<li><p>Donc dans l’étape du fine-tuning, on prend le modèel pré-entrainé et on l’entraine de nouveau sur notre jeu de données.</p></li>
+<li><p>Par exemple, ici on a fine-tuné BERT sur une tâche de classification de courriels (pourriel ou courriel légitime).</p></li>
+<li><p>On a ajouté une tête de classification au modèle, qui permet de transformer la sortie de BERT en probabilité d’être un pourriel.</p></li>
+<li><p>On va ensuite aller faire l’entrainement en utilisant un jeu de données de courriels étiquetés « spam » ou « not-spam ».</p></li>
+<li><p>Donc en gros, dans cette étape de fine-tuning, les poids du modèle vont être modifiés de telle sorte que la tâche à accomplir est optimisée.</p></li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="limites-de-bert" class="slide level2">
+<h2>Limites de BERT</h2>
+<h3 id="embeddings-de-phrases-de-basse-qualité">Embeddings de phrases de basse qualité</h3>
+<ul>
+<li>BERT est conçu pour créer des embeddings de mots.</li>
+<li>Possible d’encoder des phrases<sup>1</sup>, mais les embeddings sont de mauvaise qualité.</li>
+</ul>
+<p><img data-src="images/scores-embeddings.png" style="margin-top: 0px;"><sup>2</sup></p>
+<aside class="notes">
 
-<img data-src="images/BERT-architecture.png" class="r-stretch"></section>
-<section id="huggingface" class="slide level2">
-<h2>HuggingFace</h2>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+<aside><ol class="aside-footnotes"><li id="fn1"><p>Soit en prenant la moyenne des embeddings de tous les mots de la phrase, soit en prenant l’embedding du token [CLS].</p></li><li id="fn2"><p>Source: <a href="https://arxiv.org/pdf/1908.10084">https://arxiv.org/pdf/1908.10084</a>. Ici, un nombre élevé se traduit par une bonne performance.</p></li></ol></aside></section>
+<section id="sentence-bert-2" class="slide level2">
+<h2>Sentence-BERT</h2>
+<h4 id="modifier-bert-pour-encoder-des-phrases">Modifier BERT pour encoder des phrases</h4>
+<div class="ul-font-size-medium">
 <ul>
-<li>A démocratisé l’utilisation des LLMs en rendant accessible leur utilisation et en fournissant une interface égale.</li>
+<li>Architecture <strong>siamoise</strong> à l’entrainement utilisant un modèle <strong>BERT pré-entrainé</strong> (les poids sont identiques dans les 2 blocs BERT).</li>
+<li>La couche de <strong>pooling</strong> permet d’obtenir un embedding de phrase à partir des embeddings de mots.</li>
+<li>Entrainé sur le corpus SNLI: 570 000 paires de phrases annotées <span style="color:#A50E0E;"><strong>contradiction</strong></span>, <span style="color:#0D652D;"><strong>implication</strong></span> ou <span style="color: #a8aabc;"><strong>neutre</strong></span>.</li>
+</ul>
+</div>
+<div class="columns">
+<div class="column" style="text-align: center;">
+<p><span style="text-decoration: underline;">À l’entrainement</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="images/sbert1.png" width="240"></p>
+</figure>
+</div>
+</div><div class="column" style="text-align: center;">
+<p><span style="text-decoration: underline;">À l’inférence</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="images/sbert2.png" width="150"></p>
+</figure>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="application-au-problème-de-classification-dentreprises" class="title-slide slide level1 center">
+<h1>Application au problème de classification d’entreprises</h1>
+<p>On a téléchargé le modèle SBERT à partir d’HuggingFace. Plus précisément, il s’agit du modèle <a href="https://huggingface.co/sentence-transformers/all-mpnet-base-v2">all-mpnet-base-v2</a> Ensuite, on l’a fine-tuné sur des paires code IBC/description d’entreprises. On peut ensuite obtenir un embedding pour chaque description d’entreprise et de code IBC.</p>
+</section>
+<section id="télécharger-le-modèle-pré-entrainé" class="slide level2">
+<h2>Télécharger le modèle pré-entrainé</h2>
+<p><img data-src="images/codeimage-snippet_21.svg" class="absolute" style="top: 50px; left: -60px; width: 800px; "></p>
+<p><img data-src="images/encode_snippet.svg" class="absolute" style="top: 50px; right: 0px; width: 600px; "></p>
+<div style="margin-top:370px; font-size: 25px;">
+<table>
+<colgroup>
+<col style="width: 42%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 7%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Phrase</th>
+<th>dim_1</th>
+<th>dim_2</th>
+<th>…</th>
+<th>dim_768</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>That is a happy person</td>
+<td>-0.0203</td>
+<td>-0.0104</td>
+<td>…</td>
+<td>-0.0053</td>
+</tr>
+<tr class="even">
+<td>That is a happy dog</td>
+<td>-0.0196</td>
+<td>-0.0323</td>
+<td>…</td>
+<td>-0.0274</td>
+</tr>
+<tr class="odd">
+<td>That is a very happy person</td>
+<td>-0.0136</td>
+<td>0.0043</td>
+<td>…</td>
+<td>-0.0054</td>
+</tr>
+<tr class="even">
+<td>Today is a sunny day</td>
+<td>-0.0075</td>
+<td>-0.0023</td>
+<td>…</td>
+<td>0.0078</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="fine-tuner-le-modèle-pré-entrainé" class="slide level2">
+<h2>Fine-tuner le modèle pré-entrainé</h2>
+<h3 id="données">Données</h3>
+<div class="fragment fade-in-then-out">
+<div style="font-size: 25px; position: absolute; top: 180px; left: 0px;">
+<p>IBC Codes</p>
+<table>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 28%">
+<col style="width: 57%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Indice</th>
+<th>IBC Code</th>
+<th>IBC Code Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>0735a10</td>
+<td>Architects - Landscaping Only</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>8916a10</td>
+<td>Engineers</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>8075a10</td>
+<td>Sanitariums</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>5813a10</td>
+<td>Coffee shops (warming of food only, no roasting of beans)</td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="even">
+<td>1260</td>
+<td>3496a10</td>
+<td>Electronic games</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="fragment fade-in">
+<div style="font-size: 25px; position: absolute; top: 180px; left: 0px;">
+<p>Entreprises</p>
+<table>
+<colgroup>
+<col style="width: 11%">
+<col style="width: 44%">
+<col style="width: 44%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Indice</th>
+<th>Company Description</th>
+<th>IBC Code</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Takeout meals-see policy, coding only</td>
+<td>5814a10 – Take out meals</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Construction of church building extension</td>
+<td>1830a20 – Building construction - general contr.</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Construction and renovation of gas stations including installation and removal of underground tanks and related pumps, carwash facilities. Snow clearing.</td>
+<td>1782a40 – Underground storage tank - remediation contractors</td>
+</tr>
+<tr class="even">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr class="odd">
+<td>136 000</td>
+<td>Licensed Restaurant</td>
+<td>5812a10 – Restaurants - licensed (Not liquor revenue)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="fine-tuner-le-modèle-pré-entrainé-1" class="slide level2">
+<h2>Fine-tuner le modèle pré-entrainé</h2>
+<h3 id="procédure">Procédure</h3>
+<p>On génère d’abord 136 000 (autant qu’il y a d’entreprises) <span style="color: #007d57;"><strong>paires positives</strong></span> et 136 000 <span style="color: #650b22;"><strong>paires négatives</strong></span>.</p>
+<div class="ul-font-size-medium">
+<ul>
+<li><span style="color: #007d57;"><strong>paire positive</strong></span>: description de l’entreprise + description de son IBC code <span style="color: #007d57;"><strong>correspondant</strong></span></li>
+<li><span style="color: #650b22;"><strong>paire négative</strong></span>: description de l’entreprise + description d’un IBC code <span style="color: #650b22;"><strong>non-correspondant</strong></span></li>
+</ul>
+</div>
+<p>On va ensuite entrainer le modèle à rapprocher les <span style="color: #007d57;"><strong>paires positives</strong></span> et à éloigner les <span style="color: #650b22;"><strong>paires négatives</strong></span>.</p>
+<div class="callout callout-note callout-style-simple">
+<div class="callout-body">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-content">
+<p>L’entrainement se fait en définissant une <strong>fonction de perte</strong> qui va « punir » les mauvaises classifications en appliquant la <strong>descente de gradient</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="algorithme-de-classification" class="slide level2">
+<h2>Algorithme de classification</h2>
+<h3 id="k-plus-proches-voisin-avec-poids-softmax-modifié">K plus proches voisin avec poids « softmax modifié »</h3>
+<p><strong>Exemple:</strong></p>
+<p>« Small business manufacturing and selling equipment for hockey referees. »</p>
+
+<img data-src="images/similar_cies.png" class="r-stretch"><aside class="notes">
+<ul>
+<li>On a maintenant un bon modèle d’embedding de descriptions d’entreprise et d’IBC codes.</li>
+<li>On peut donc obtenir un vecteur d’embedding pour chaque IBC code et pour chaque entreprise.</li>
+<li>On peut maintenant faire du machine learning classique pour obtenir des suggestions.</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="applications-possibles" class="slide level2">
+<h2>Applications possibles</h2>
+<ul>
+<li>Extraction de features pour ensuite utiliser dans un modèle de machine learning.</li>
+<li>Groupement de documents (classification de texte).</li>
+<li>Résolution d’entités (lorsqu’on n’a pas d’identifiant unique)</li>
+<li>Question-réponse (trouver une réponse pertinente dans une base de connaissances à partir d’une question donnée)</li>
+<li>Recherche sémantique</li>
 </ul>
 </section>
-<section id="bert" class="slide level2">
-<h2>BERT</h2>
-<ul>
-<li>BERT is trained using masked language modeling and next sentence prediction. But it was shown that next sentence prediction doesn’t help that much.</li>
-<li>Entrainé entre autres sur tout le Wikipédia anglais</li>
-<li>BERT: un embedding est obtenu pour chaque mot de la phrase. Ensuite, pour obtenir un embedding de la phrase, on va sommariser les embeddings (typiquement, en prenant la moyenne ou en gardant l’embedding du token [CLS] qui indique le début de la phrase).</li>
-<li>SBERT permet de générer des embeddings fixes pour chaque phrase, ce qui permet de rapidement calculer des distances entre un grand nombre de phrases. Avec d’autres modèles comme BERT, il est nécessaire de traiter chaque phrase ensemble, ce qui est très coûteux en termes de temps de calcul.</li>
-</ul>
+<section id="ressources" class="slide level2">
+<h2>Ressources</h2>
+<p><a href="The%20Illustrated%20Transformer%20--%20Jay%20Alammar">https://jalammar.github.io/illustrated-transformer/</a> <a href="The%20Attention%20Mechanism%20in%20Large%20Language%20Models%20--%20Luis%20Serrano">https://www.youtube.com/watch?v=OxCpWwDCDFQ</a> <a href="Attention%20in%20transformers,%20visually%20explained%20--%203Blue1Brown">https://www.youtube.com/watch?v=eMlx5fFNoYc</a></p>
+</section>
+<section id="histoire" class="slide level2 small-text-slide">
+<h2>Histoire</h2>
+<p>Les grands modèles de langage de type « encodeurs » permettent d’encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l’architecture <em>transformers</em>, qui comprend un « mécanisme d’auto-attention (self-attention mechanism) », développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d’auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l’encodage de phrases, car il permet, grâce à son architecture siamoise, d’obtenir de meilleurs embeddings et d’accélérer le calcul des similarités.</p>
+<p>Lorsqu’une entreprise s’assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n’est parfois pas évident puisque ces codes sont au nombre d’environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d’abord téléchargé le modèle pré-entrainé que nous avons finetuné sur un jeu de données interne. Le modèle entrainé permet d’obtenir, pour n’importe quelle description d’entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l’aide d’un algorithme des k plus proches voisins.</p>
 </section>
 <section id="bert-2" class="slide level2">
 <h2>BERT (2)</h2>
@@ -418,72 +935,12 @@ Francis Duval, Research Scientist | Co-operators
 <li>Encode chaque phrase indépendamment en un vecteur de dimension fixe. La similarité entre 2 phrases peut ensuite être calculée, par exemple en calculant le cosinus de l’angle entre les 2 phrases (similarité cosinus).</li>
 <li>Cela réduit considérablement le temps de calcul, car on n’a pas à repasser les phrases à chaque fois dans le modèle.</li>
 </ul>
-</section>
-<section id="objectifs-de-la-présentation" class="slide level2">
-<h2>Objectifs de la présentation</h2>
-</section>
-<section id="importance-des-représentations-de-phrases" class="slide level2">
-<h2>Importance des représentations de phrases</h2>
-</section>
-<section id="limites-des-méthodes-traditionnelles" class="slide level2">
-<h2>Limites des méthodes traditionnelles</h2>
-</section>
-<section id="sentence-bert-inférence" class="slide level2">
-<h2>Sentence-BERT – Inférence</h2>
-</section>
-<section id="sentence-bert-entrainement" class="slide level2">
-<h2>Sentence-BERT – Entrainement</h2>
-</section>
-<section id="sentence-bert-fine-tuning" class="slide level2">
-<h2>Sentence-BERT – Fine-tuning</h2>
-</section>
-<section id="application-au-problèmes-de-codes-ibc" class="slide level2">
-<h2>Application au problèmes de codes IBC</h2>
-</section>
-<section id="applications-possibles" class="slide level2">
-<h2>Applications possibles</h2>
-<ul>
-<li>Extraction de features pour ensuite utiliser dans un modèle de machine learning.</li>
-<li>Groupement de documents (classification de texte).</li>
-<li>Résolution d’entités (lorsqu’on n’a pas d’identifiant unique)</li>
-<li>Question-réponse (trouver une réponse pertinente dans une base de connaissances à partir d’une question donnée)</li>
-<li>Recherche sémantique</li>
-</ul>
-</section>
-<section id="modèle-de-suggestion-de-code-ibc" class="slide level2">
-<h2>Modèle de suggestion de code IBC</h2>
-<ul>
-<li>SBERT pour obtenir un embedding de la description.</li>
-<li>Ensuite, KNN sur les embeddings.</li>
-</ul>
-</section>
-<section id="huggingface-1" class="slide level2">
-<h2>HuggingFace</h2>
-</section>
-<section id="limites" class="slide level2">
-<h2>Limites</h2>
-<ul>
-<li>Complexité du fine-tuning et coût computationnel</li>
-<li>Pas idéal pour des textes très longs</li>
-</ul>
-</section>
-<section id="pourquoi-avons-nous-besoin-dencoder-des-phrases" class="slide level2">
-<h2>Pourquoi avons-nous besoin d’encoder des phrases?</h2>
-</section>
-<section id="notes" class="slide level2">
-<h2>Notes</h2>
-<ul>
-<li>Les LLM’s sont des modèles qui permettent aux ordinateurs de « comprendre » du texte (alors qu’au fond, ils ne peuvent comprendre que des nombres)</li>
-</ul>
-</section>
-<section id="ressources" class="slide level2">
-<h2>Ressources</h2>
-<p><a href="The%20Illustrated%20Transformer%20--%20Jay%20Alammar">https://jalammar.github.io/illustrated-transformer/</a> <a href="The%20Attention%20Mechanism%20in%20Large%20Language%20Models%20--%20Luis%20Serrano">https://www.youtube.com/watch?v=OxCpWwDCDFQ</a></p>
 
 <img src="images/logo_blue_2.png" class="slide-logo r-stretch"><div class="footer footer-default">
-<p><a href="https://github.com/francisduval/quarto_slides_cara_coop">https://github.com/francisduval/quarto_slides_cara_coop</a></p>
+<p><a href="https://github.com/francisduval/presentation_cara_27_novembre_2024">github.com/francisduval/presentation_cara_27_novembre_2024</a></p>
 </div>
-</section>
+</section></section>
+
     </div>
   </div>
 
@@ -643,7 +1100,7 @@ Francis Duval, Research Scientist | Co-operators
         previewLinks: false,
 
         // Transition style (none/fade/slide/convex/concave/zoom)
-        transition: 'convex',
+        transition: 'slide',
 
         // Transition speed (default/fast/slow)
         transitionSpeed: 'default',
@@ -695,6 +1152,31 @@ Francis Duval, Research Scientist | Co-operators
           RevealSearch,
           RevealZoom
         ]
+      });
+    </script>
+    <!-- Javascript function allowing to hide footer on slides other than title slide -->
+    <script type="text/javascript" charset="utf-8">
+      function add_custom_footer() {
+        let title_slide = document.querySelector("section#title-slide");
+        let title_slide_footer = title_slide.getAttribute('data-footer');
+        let footer = document.querySelector('div.footer p');
+        let global_footer_text = footer.innerHTML;
+
+        if (title_slide.classList.contains('present')) {
+          footer.innerHTML = title_slide_footer;
+        }
+
+        Reveal.on( 'slidechanged' , event => {
+            if (event.currentSlide.matches('#title-slide')) {
+              footer.innerHTML = global_footer_text;
+            } else {
+              footer.innerHTML = title_slide_footer;
+            }
+          });
+      };
+
+      window.addEventListener("load", (event) => {
+        add_custom_footer();
       });
     </script>
     <script id="quarto-html-after-body" type="application/javascript">
