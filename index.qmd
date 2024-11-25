@@ -29,7 +29,7 @@ include-after-body: add-custom-footer.html
 
 ## Résumé de la présentation
 
-### Sentence-BERT
+### 1. Sentence-BERT
 
 - Embeddings
 - BERT
@@ -37,12 +37,11 @@ include-after-body: add-custom-footer.html
 - Pré-entrainement et fine-tuning
 - Sentence-BERT
 
-### Application au problème de classification des entreprises
+### 2. Application au problème de classification des entreprises
 
 - Télécharger le modèle pré-entrainé
 - Fine-tuning sur nos données
 - Algorithme KNN pour la classification
-- Résultats et outil pour les souscripteurs
 
 
 ::: notes
@@ -276,7 +275,10 @@ En français, souvent traduit par **plongement** ou **représentation vectoriell
 ![](images/scores-embeddings.png){style='margin-top: 0px;'}^[Source: [https://arxiv.org/pdf/1908.10084](https://arxiv.org/pdf/1908.10084). Ici, un nombre élevé se traduit par une bonne performance.]
 
 ::: notes
-
+- Une grosse limite de BERT est qu'il ne permet pas d'obtenir des embeddings de phrases (seulement de mots, ou tokens).
+- En fait, c'est possible d'obtenir des embeddings de phrases, soit en prenant la moyenne des embeddings de mots ou en prenant le embedding du token spécial CLS, mais ça donne des embeddings de mauvaise qualité.
+- La colonne « Avg. » ici nous dit que les embeddings de phrases obtenus avec BERT sont moins bons que ceux obtenus avec GloVe, un modèle développé en 2014 qui créée des embeddings non-contextualisés.
+- Pour notre application, on veut obtenir des embeddings pour nos descriptions d'entreprises, donc on a besoin d'un modèle d'embedding de phrases. Il va donc falloir modifier un peu BERT.
 :::
 
 
@@ -295,21 +297,32 @@ En français, souvent traduit par **plongement** ou **représentation vectoriell
 ::: {.column width='50%' style='text-align: center;'}
 [À l'entrainement]{style='text-decoration: underline;'}
 
-![](images/sbert1.png){width=240 fig-align="center"}
+![](images/sbert_1.png){width=300 fig-align="center"}
 :::
 
 ::: {.column width='50%' style='text-align: center;'}
 [À l'inférence]{style='text-decoration: underline;'}
 
-![](images/sbert2.png){width=150 fig-align="center"}
+![](images/sbert_2.png){width=130 fig-align="center"}
 :::
 
 :::
 
+[Figures tirées de [Hands-On Large Language Models -- Jay Alammar et Maarten Grootendorst](https://www.oreilly.com/library/view/hands-on-large-language/9781098150952/)»]{.absolute bottom=-30 left='50%' style='font-size: 17px;'}
 
-# Application au problème de classification d'entreprises
+::: notes
+- Donc ça nous amène à SBERT, qui est une modification de BERT pour faire des embeddings de phrases.
+- C'est un réseau siamois (à l'entrainement) qui contient 2 modèles BERT avec les poids liés (en fait, c'est 2 copies du même modèle).
+- On a une couche de pooling qui permet de transformer les embeddings de mots en embedding de phrase.
+- Donc on prend BERT pré-entrainé et la couche de pooling qu'on arrange en un réseau siamois, et on va aller entrainer cette architecture sur un jeu de données de paires de phrases annotées contradiction, implication, ou neutre.
+- Donc on prend chacune des 2 phrases, qu'on va passer au modèle BERT. Ensuite, la sortie de BERT va être donnée à la couche de pooling, qui va nous sortir un embedding de phrase. Ensuite, on va concaténer les 2 embeddings en plus de la différence absolue élément par élément, et c'est ce vecteur qui va être utilisé pour la classification entre « contradiction », « implication » ou « neutre ».
 
-On a téléchargé le modèle SBERT à partir d'HuggingFace. Plus précisément, il s'agit du modèle [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) Ensuite, on l'a fine-tuné sur des paires code IBC/description d'entreprises. On peut ensuite obtenir un embedding pour chaque description d'entreprise et de code IBC. 
+- Une fois le modèle entrainé, on peut se débarasser de l'architecture siamoise et garder seulement BERT + pooling.
+- Donc en fait, ce qui améliore les embeddings de phrase, c'est vraiment l'étape d'entrainement sur les paires de phrases.
+:::
+
+
+# 2. Application au problème de classification d'entreprises
 
 
 ## Télécharger le modèle pré-entrainé
@@ -328,6 +341,14 @@ On a téléchargé le modèle SBERT à partir d'HuggingFace. Plus précisément,
 | Today is a sunny day        | -0.0075 | -0.0023 | ... | 0.0078  |
 :::
 
+On peut tester le modèle [ici](https://huggingface.co/sentence-transformers/all-mpnet-base-v2).
+
+::: notes
+- On peut facilement télécharger le modèle à partir du site HuggingFace en utilisant la librairie « sentence_transformers ».
+- Le modèle qu'on utilise n'est pas exactement le SBERT original, mais quelque chose de très similaire. C'est le modèle de base, donc celui avec 12 blocs transformers et 110 millions de paramètres.
+- On peut commencer à l'utiliser directement pour obtenir des embeddings de phrases avec la méthode « encode ».
+:::
+
 
 ## Fine-tuner le modèle pré-entrainé
 
@@ -338,7 +359,7 @@ On a téléchargé le modèle SBERT à partir d'HuggingFace. Plus précisément,
 ::: {style='font-size: 25px; position: absolute; top: 180px; left: 0px;'}
 IBC Codes
 
-| Indice | IBC Code | IBC Code Description |
+| Index | IBC Code | IBC Code Description |
 |-|--|----|
 | 1 | 0735a10   | Architects - Landscaping Only |
 | 2 | 8916a10 | Engineers |
@@ -355,7 +376,7 @@ IBC Codes
 ::: {style='font-size: 25px; position: absolute; top: 180px; left: 0px;'}
 Entreprises
 
-| Indice | Company Description | IBC Code |
+| Index | Company Description | IBC Code |
 |-|----|----|
 | 1 | Takeout meals-see policy, coding only | 5814a10  -- Take out meals |
 | 2 | Construction of church building extension | 1830a20  -- Building construction - general contr. |
@@ -363,6 +384,16 @@ Entreprises
 | ... | ... | ... |
 | 136 000 | Licensed Restaurant | 5812a10  -- Restaurants - licensed (Not liquor revenue) |
 :::
+
+:::
+
+::: notes
+- La tâche qu'on veut accomplir est la suivante.
+- Lorsqu'on assure une entreprise, le souscripteur doit lui assigner un code IBC parmi 1260 codes, ce qui n'est pas toujours évident.
+- L'outil qu'on a créé permet de suggérer des codes IBC lorsqu'on fournit une description d'entreprise.
+- Puisqu'on veut associer une entreprise à un code IBC, on va fine-tuner le modèle pour qu'il apprenne à rapprocher les entreprise de leur code IBC correspondant.
+
+- Pour ça, on a 2 jeu de données. Le premier contient tous les codes et leur description, tandis que le deuxième contient 136 000 entreprises qu'on a assurées dans le passé avec leur code IBC associé.
 
 :::
 
@@ -378,18 +409,31 @@ On génère d'abord 136 000 (autant qu'il y a d'entreprises) [**paires positives
 - [**paire négative**]{style='color: #650b22;'}: description de l'entreprise + description d'un IBC code [**non-correspondant**]{style='color: #650b22;'}
 :::
 
-On va ensuite entrainer le modèle à rapprocher les [**paires positives**]{style='color: #007d57;'} et à éloigner les [**paires négatives**]{style='color: #650b22;'}.
 
-::: {.callout-note appearance="simple"}
-L'entrainement se fait en définissant une **fonction de perte** qui va « punir » les mauvaises classifications en appliquant la **descente de gradient**.
+::: {style='font-size: 24px;'}
+| Pair ID | Company Description | IBC Code Description | Label |
+|-|----|----|---|
+| 1 | Construction of church building extension | Building construction - general contr. | [**Positive pair**]{style='color: #007d57;'} |
+| 2 | Construction of church building extension | Take out meals | [**Negative pair**]{style='color: #650b22;'} |
+| 3 | Licensed restaurant | Restaurants - licensed (Not liquor revenue) | [**Positive pair**]{style='color: #007d57;'} |
+| 4 | Licensed restaurant | Building construction - general contr. | [**Negative pair**]{style='color: #650b22;'} |
+| ... | ... | ... | ... |
+:::
+
+On va ensuite entrainer le modèle à rapprocher les [**paires positives**]{style='color: #007d57;'} et à éloigner les [**paires négatives**]{style='color: #650b22;'} en utilisant une fonction de perte et la descente de gradient.
+
+
+::: notes
+- La première étape est de se créer un jeu de données étiqueté. On va se créer 136 00 paires de phrases positives et 136 000 paires négatives.
+- Une paire positive, c'est une description d'entreprise couplée avec la description de son code IBC correspondant.
+- Une paire négative, c'est une description d'entreprise couplée avec une description de code IBC non-correspondant.
+- L'algorithme d'entrainement est alors déclenché pour modifier les paramètres du modèle de telle sorte que les entreprises sont rapprochées de leur IBC code correspondant (et éloignées de leurs codes IBC non-correspondants).
 :::
 
 
 ## Algorithme de classification
 
 ### K plus proches voisin avec poids « softmax modifié »
-
-
 
 **Exemple:**
 
@@ -398,40 +442,52 @@ L'entrainement se fait en définissant une **fonction de perte** qui va « punir
 ![](images/similar_cies.png)
 
 
+[https://rstudiotest.cgic.ca/ibc_code_selector_app/](https://rstudiotest.cgic.ca/ibc_code_selector_app/)
+
 ::: notes
 - On a maintenant un bon modèle d'embedding de descriptions d'entreprise et d'IBC codes.
 - On peut donc obtenir un vecteur d'embedding pour chaque IBC code et pour chaque entreprise.
 - On peut maintenant faire du machine learning classique pour obtenir des suggestions.
+- Pour faire la classification, on a utilisé un algorithme des K plus proches voisins pondérés.
+- Par exemple, si cette description est donnée en entrée, le modèle va d'abord calculer l'embedding. 
+- Ensuite, on va calculer la similarité cosinus avec chacune des entreprise dans le jeu de données.
+- Un poids est alors calculé pour chaque entreprise. Plus la description est similaire, plus le poids sera élevé.
+- Ensuite, on additionne les poids pour chaque code, et on va suggérer les 5 codes IBC qui ont le plus gros poids.
 :::
-
-
-
 
 
 ## Applications possibles
 
-- Extraction de features pour ensuite utiliser dans un modèle de machine learning.
-- Groupement de documents (classification de texte).
-- Résolution d'entités (lorsqu'on n'a pas d'identifiant unique)
-- Question-réponse (trouver une réponse pertinente dans une base de connaissances à partir d'une question donnée)
-- Recherche sémantique
+### BERT et Sentence-BERT
+
+- **Classification de texte** --- Classifier des textes en différentes catégories, comme la détection de pourriels, l'analyse de sentiments, ou la classification de sujets.  
+- **Reconnaissance d'entités nommées (NER)** --- Identifier et classifier les entités nommées dans un texte, telles que les noms de personnes, d'organisations, de lieux, etc.  
+- **Extraction de covariables** --- Extraire de l'information structurée à partir de texte pour utilisation dans un modèle classique d'apprentissage automatique.  
+- **Synthèse de texte** --- Extraire l'information pertinente d'un texte.  
+- **Etc.**
 
 
 ## Ressources
 
-[https://jalammar.github.io/illustrated-transformer/](The Illustrated Transformer -- Jay Alammar)
-[https://www.youtube.com/watch?v=OxCpWwDCDFQ](The Attention Mechanism in Large Language Models -- Luis Serrano)
-[https://www.youtube.com/watch?v=eMlx5fFNoYc](Attention in transformers, visually explained -- 3Blue1Brown)
+<br>
+
+::: {.ul-font-size-medium}
+- [Hands-On Large Language Models -- Jay Alammar et Maarten Grootendorst](https://www.oreilly.com/library/view/hands-on-large-language/9781098150952/)
+- [The Illustrated Transformer -- Jay Alammar](https://jalammar.github.io/illustrated-transformer/)  
+- [The Attention Mechanism in Large Language Models -- Luis Serrano](https://www.youtube.com/watch?v=OxCpWwDCDFQ)  
+- [Attention in transformers, visually explained -- 3Blue1Brown](https://www.youtube.com/watch?v=eMlx5fFNoYc)
+:::
 
 
-## Histoire {.small-text-slide}
+# 3. Annexe {visibility='uncounted'}
 
-Les grands modèles de langage de type « encodeurs » permettent d'encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l'architecture *transformers*, qui comprend un « mécanisme d'auto-attention (self-attention mechanism) », développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d'auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l'encodage de phrases, car il permet, grâce à son architecture siamoise, d'obtenir de meilleurs embeddings et d'accélérer le calcul des similarités.
+## Résumé {.small-text-slide visibility='uncounted'}
 
-Lorsqu'une entreprise s'assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n'est parfois pas évident puisque ces codes sont au nombre d'environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d'abord téléchargé le modèle pré-entrainé que nous avons finetuné sur un jeu de données interne. Le modèle entrainé permet d'obtenir, pour n'importe quelle description d'entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l'aide d'un algorithme des k plus proches voisins.
+Les grands modèles de langage de type « encodeurs » permettent d'encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l'architecture *transformers*, qui comprend un « mécanisme d'auto-attention » (self-attention mechanism), développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d'auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l'encodage de phrases, car il permet, grâce à son architecture siamoise, d'obtenir de meilleurs embeddings et d'accélérer le calcul des similarités.
 
+Lorsqu'une entreprise s'assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n'est parfois pas évident puisque ces codes sont au nombre d'environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d'abord téléchargé le modèle pré-entrainé que nous avons fine-tuné sur un jeu de données interne. Le modèle entrainé permet d'obtenir, pour n'importe quelle description d'entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l'aide d'un algorithme des k plus proches voisins.
 
-## BERT (2)
+## BERT vs Sentence-BERT {visibility='uncounted'}
 
 **BERT**
 
@@ -443,4 +499,9 @@ Lorsqu'une entreprise s'assure chez Co-operators, un souscripteur est chargé de
 
 - Encode chaque phrase indépendamment en un vecteur de dimension fixe. La similarité entre 2 phrases peut ensuite être calculée, par exemple en calculant le cosinus de l'angle entre les 2 phrases (similarité cosinus).
 - Cela réduit considérablement le temps de calcul, car on n'a pas à repasser les phrases à chaque fois dans le modèle.
+
+
+## Jeu de données SNLI {visibility='uncounted'}
+
+![](images/examples_snli.png)
 

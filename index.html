@@ -345,7 +345,7 @@ Francis Duval, Research Scientist | Co-operators
 </section>
 <section id="résumé-de-la-présentation" class="slide level2">
 <h2>Résumé de la présentation</h2>
-<h3 id="sentence-bert">Sentence-BERT</h3>
+<h3 id="sentence-bert">1. Sentence-BERT</h3>
 <ul>
 <li>Embeddings</li>
 <li>BERT</li>
@@ -353,12 +353,11 @@ Francis Duval, Research Scientist | Co-operators
 <li>Pré-entrainement et fine-tuning</li>
 <li>Sentence-BERT</li>
 </ul>
-<h3 id="application-au-problème-de-classification-des-entreprises">Application au problème de classification des entreprises</h3>
+<h3 id="application-au-problème-de-classification-des-entreprises">2. Application au problème de classification des entreprises</h3>
 <ul>
 <li>Télécharger le modèle pré-entrainé</li>
 <li>Fine-tuning sur nos données</li>
 <li>Algorithme KNN pour la classification</li>
-<li>Résultats et outil pour les souscripteurs</li>
 </ul>
 <aside class="notes">
 <ul>
@@ -656,7 +655,12 @@ Francis Duval, Research Scientist | Co-operators
 </ul>
 <p><img data-src="images/scores-embeddings.png" style="margin-top: 0px;"><sup>2</sup></p>
 <aside class="notes">
-
+<ul>
+<li>Une grosse limite de BERT est qu’il ne permet pas d’obtenir des embeddings de phrases (seulement de mots, ou tokens).</li>
+<li>En fait, c’est possible d’obtenir des embeddings de phrases, soit en prenant la moyenne des embeddings de mots ou en prenant le embedding du token spécial CLS, mais ça donne des embeddings de mauvaise qualité.</li>
+<li>La colonne « Avg. » ici nous dit que les embeddings de phrases obtenus avec BERT sont moins bons que ceux obtenus avec GloVe, un modèle développé en 2014 qui créée des embeddings non-contextualisés.</li>
+<li>Pour notre application, on veut obtenir des embeddings pour nos descriptions d’entreprises, donc on a besoin d’un modèle d’embedding de phrases. Il va donc falloir modifier un peu BERT.</li>
+</ul>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -684,23 +688,45 @@ Francis Duval, Research Scientist | Co-operators
 <p><span style="text-decoration: underline;">À l’entrainement</span></p>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="images/sbert1.png" width="240"></p>
+<p><img data-src="images/sbert_1.png" width="300"></p>
 </figure>
 </div>
 </div><div class="column" style="text-align: center;">
 <p><span style="text-decoration: underline;">À l’inférence</span></p>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="images/sbert2.png" width="150"></p>
+<p><img data-src="images/sbert_2.png" width="130"></p>
 </figure>
 </div>
 </div>
 </div>
+<p><span class="absolute" style="font-size: 17px;left: 50%; bottom: -30px; ">Figures tirées de <a href="https://www.oreilly.com/library/view/hands-on-large-language/9781098150952/">Hands-On Large Language Models – Jay Alammar et Maarten Grootendorst</a>»</span></p>
+<aside class="notes">
+<ul>
+<li><p>Donc ça nous amène à SBERT, qui est une modification de BERT pour faire des embeddings de phrases.</p></li>
+<li><p>C’est un réseau siamois (à l’entrainement) qui contient 2 modèles BERT avec les poids liés (en fait, c’est 2 copies du même modèle).</p></li>
+<li><p>On a une couche de pooling qui permet de transformer les embeddings de mots en embedding de phrase.</p></li>
+<li><p>Donc on prend BERT pré-entrainé et la couche de pooling qu’on arrange en un réseau siamois, et on va aller entrainer cette architecture sur un jeu de données de paires de phrases annotées contradiction, implication, ou neutre.</p></li>
+<li><p>Donc on prend chacune des 2 phrases, qu’on va passer au modèle BERT. Ensuite, la sortie de BERT va être donnée à la couche de pooling, qui va nous sortir un embedding de phrase. Ensuite, on va concaténer les 2 embeddings en plus de la différence absolue élément par élément, et c’est ce vecteur qui va être utilisé pour la classification entre « contradiction », « implication » ou « neutre ».</p></li>
+<li><p>Une fois le modèle entrainé, on peut se débarasser de l’architecture siamoise et garder seulement BERT + pooling.</p></li>
+<li><p>Donc en fait, ce qui améliore les embeddings de phrase, c’est vraiment l’étape d’entrainement sur les paires de phrases.</p></li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section></section>
 <section>
 <section id="application-au-problème-de-classification-dentreprises" class="title-slide slide level1 center">
-<h1>Application au problème de classification d’entreprises</h1>
-<p>On a téléchargé le modèle SBERT à partir d’HuggingFace. Plus précisément, il s’agit du modèle <a href="https://huggingface.co/sentence-transformers/all-mpnet-base-v2">all-mpnet-base-v2</a> Ensuite, on l’a fine-tuné sur des paires code IBC/description d’entreprises. On peut ensuite obtenir un embedding pour chaque description d’entreprise et de code IBC.</p>
+<h1>2. Application au problème de classification d’entreprises</h1>
+
 </section>
 <section id="télécharger-le-modèle-pré-entrainé" class="slide level2">
 <h2>Télécharger le modèle pré-entrainé</h2>
@@ -756,6 +782,24 @@ Francis Duval, Research Scientist | Co-operators
 </tbody>
 </table>
 </div>
+<p>On peut tester le modèle <a href="https://huggingface.co/sentence-transformers/all-mpnet-base-v2">ici</a>.</p>
+<aside class="notes">
+<ul>
+<li>On peut facilement télécharger le modèle à partir du site HuggingFace en utilisant la librairie « sentence_transformers ».</li>
+<li>Le modèle qu’on utilise n’est pas exactement le SBERT original, mais quelque chose de très similaire. C’est le modèle de base, donc celui avec 12 blocs transformers et 110 millions de paramètres.</li>
+<li>On peut commencer à l’utiliser directement pour obtenir des embeddings de phrases avec la méthode « encode ».</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
 <section id="fine-tuner-le-modèle-pré-entrainé" class="slide level2">
 <h2>Fine-tuner le modèle pré-entrainé</h2>
@@ -771,7 +815,7 @@ Francis Duval, Research Scientist | Co-operators
 </colgroup>
 <thead>
 <tr class="header">
-<th>Indice</th>
+<th>Index</th>
 <th>IBC Code</th>
 <th>IBC Code Description</th>
 </tr>
@@ -822,7 +866,7 @@ Francis Duval, Research Scientist | Co-operators
 </colgroup>
 <thead>
 <tr class="header">
-<th>Indice</th>
+<th>Index</th>
 <th>Company Description</th>
 <th>IBC Code</th>
 </tr>
@@ -857,6 +901,25 @@ Francis Duval, Research Scientist | Co-operators
 </table>
 </div>
 </div>
+<aside class="notes">
+<ul>
+<li><p>La tâche qu’on veut accomplir est la suivante.</p></li>
+<li><p>Lorsqu’on assure une entreprise, le souscripteur doit lui assigner un code IBC parmi 1260 codes, ce qui n’est pas toujours évident.</p></li>
+<li><p>L’outil qu’on a créé permet de suggérer des codes IBC lorsqu’on fournit une description d’entreprise.</p></li>
+<li><p>Puisqu’on veut associer une entreprise à un code IBC, on va fine-tuner le modèle pour qu’il apprenne à rapprocher les entreprise de leur code IBC correspondant.</p></li>
+<li><p>Pour ça, on a 2 jeu de données. Le premier contient tous les codes et leur description, tandis que le deuxième contient 136 000 entreprises qu’on a assurées dans le passé avec leur code IBC associé.</p></li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
 <section id="fine-tuner-le-modèle-pré-entrainé-1" class="slide level2">
 <h2>Fine-tuner le modèle pré-entrainé</h2>
@@ -868,17 +931,75 @@ Francis Duval, Research Scientist | Co-operators
 <li><span style="color: #650b22;"><strong>paire négative</strong></span>: description de l’entreprise + description d’un IBC code <span style="color: #650b22;"><strong>non-correspondant</strong></span></li>
 </ul>
 </div>
-<p>On va ensuite entrainer le modèle à rapprocher les <span style="color: #007d57;"><strong>paires positives</strong></span> et à éloigner les <span style="color: #650b22;"><strong>paires négatives</strong></span>.</p>
-<div class="callout callout-note callout-style-simple">
-<div class="callout-body">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
+<div style="font-size: 24px;">
+<table>
+<colgroup>
+<col style="width: 8%">
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Pair ID</th>
+<th>Company Description</th>
+<th>IBC Code Description</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Construction of church building extension</td>
+<td>Building construction - general contr.</td>
+<td><span style="color: #007d57;"><strong>Positive pair</strong></span></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Construction of church building extension</td>
+<td>Take out meals</td>
+<td><span style="color: #650b22;"><strong>Negative pair</strong></span></td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Licensed restaurant</td>
+<td>Restaurants - licensed (Not liquor revenue)</td>
+<td><span style="color: #007d57;"><strong>Positive pair</strong></span></td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Licensed restaurant</td>
+<td>Building construction - general contr.</td>
+<td><span style="color: #650b22;"><strong>Negative pair</strong></span></td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="callout-content">
-<p>L’entrainement se fait en définissant une <strong>fonction de perte</strong> qui va « punir » les mauvaises classifications en appliquant la <strong>descente de gradient</strong>.</p>
-</div>
-</div>
-</div>
+<p>On va ensuite entrainer le modèle à rapprocher les <span style="color: #007d57;"><strong>paires positives</strong></span> et à éloigner les <span style="color: #650b22;"><strong>paires négatives</strong></span> en utilisant une fonction de perte et la descente de gradient.</p>
+<aside class="notes">
+<ul>
+<li>La première étape est de se créer un jeu de données étiqueté. On va se créer 136 00 paires de phrases positives et 136 000 paires négatives.</li>
+<li>Une paire positive, c’est une description d’entreprise couplée avec la description de son code IBC correspondant.</li>
+<li>Une paire négative, c’est une description d’entreprise couplée avec une description de code IBC non-correspondant.</li>
+<li>L’algorithme d’entrainement est alors déclenché pour modifier les paramètres du modèle de telle sorte que les entreprises sont rapprochées de leur IBC code correspondant (et éloignées de leurs codes IBC non-correspondants).</li>
+</ul>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
 <section id="algorithme-de-classification" class="slide level2">
 <h2>Algorithme de classification</h2>
@@ -886,11 +1007,17 @@ Francis Duval, Research Scientist | Co-operators
 <p><strong>Exemple:</strong></p>
 <p>« Small business manufacturing and selling equipment for hockey referees. »</p>
 
-<img data-src="images/similar_cies.png" class="r-stretch"><aside class="notes">
+<img data-src="images/similar_cies.png" class="r-stretch"><p><a href="https://rstudiotest.cgic.ca/ibc_code_selector_app/">https://rstudiotest.cgic.ca/ibc_code_selector_app/</a></p>
+<aside class="notes">
 <ul>
 <li>On a maintenant un bon modèle d’embedding de descriptions d’entreprise et d’IBC codes.</li>
 <li>On peut donc obtenir un vecteur d’embedding pour chaque IBC code et pour chaque entreprise.</li>
 <li>On peut maintenant faire du machine learning classique pour obtenir des suggestions.</li>
+<li>Pour faire la classification, on a utilisé un algorithme des K plus proches voisins pondérés.</li>
+<li>Par exemple, si cette description est donnée en entrée, le modèle va d’abord calculer l’embedding.</li>
+<li>Ensuite, on va calculer la similarité cosinus avec chacune des entreprise dans le jeu de données.</li>
+<li>Un poids est alors calculé pour chaque entreprise. Plus la description est similaire, plus le poids sera élevé.</li>
+<li>Ensuite, on additionne les poids pour chaque code, et on va suggérer les 5 codes IBC qui ont le plus gros poids.</li>
 </ul>
 <style type="text/css">
         span.MJX_Assistive_MathML {
@@ -906,25 +1033,45 @@ Francis Duval, Research Scientist | Co-operators
 </section>
 <section id="applications-possibles" class="slide level2">
 <h2>Applications possibles</h2>
+<h3 id="bert-et-sentence-bert">BERT et Sentence-BERT</h3>
 <ul>
-<li>Extraction de features pour ensuite utiliser dans un modèle de machine learning.</li>
-<li>Groupement de documents (classification de texte).</li>
-<li>Résolution d’entités (lorsqu’on n’a pas d’identifiant unique)</li>
-<li>Question-réponse (trouver une réponse pertinente dans une base de connaissances à partir d’une question donnée)</li>
-<li>Recherche sémantique</li>
+<li><strong>Classification de texte</strong> — Classifier des textes en différentes catégories, comme la détection de pourriels, l’analyse de sentiments, ou la classification de sujets.<br>
+</li>
+<li><strong>Reconnaissance d’entités nommées (NER)</strong> — Identifier et classifier les entités nommées dans un texte, telles que les noms de personnes, d’organisations, de lieux, etc.<br>
+</li>
+<li><strong>Extraction de covariables</strong> — Extraire de l’information structurée à partir de texte pour utilisation dans un modèle classique d’apprentissage automatique.<br>
+</li>
+<li><strong>Synthèse de texte</strong> — Extraire l’information pertinente d’un texte.<br>
+</li>
+<li><strong>Etc.</strong></li>
 </ul>
 </section>
 <section id="ressources" class="slide level2">
 <h2>Ressources</h2>
-<p><a href="The%20Illustrated%20Transformer%20--%20Jay%20Alammar">https://jalammar.github.io/illustrated-transformer/</a> <a href="The%20Attention%20Mechanism%20in%20Large%20Language%20Models%20--%20Luis%20Serrano">https://www.youtube.com/watch?v=OxCpWwDCDFQ</a> <a href="Attention%20in%20transformers,%20visually%20explained%20--%203Blue1Brown">https://www.youtube.com/watch?v=eMlx5fFNoYc</a></p>
+<p><br></p>
+<div class="ul-font-size-medium">
+<ul>
+<li><a href="https://www.oreilly.com/library/view/hands-on-large-language/9781098150952/">Hands-On Large Language Models – Jay Alammar et Maarten Grootendorst</a></li>
+<li><a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer – Jay Alammar</a><br>
+</li>
+<li><a href="https://www.youtube.com/watch?v=OxCpWwDCDFQ">The Attention Mechanism in Large Language Models – Luis Serrano</a><br>
+</li>
+<li><a href="https://www.youtube.com/watch?v=eMlx5fFNoYc">Attention in transformers, visually explained – 3Blue1Brown</a></li>
+</ul>
+</div>
+</section></section>
+<section>
+<section id="annexe" class="title-slide slide level1 center" data-visibility="uncounted">
+<h1>3. Annexe</h1>
+
 </section>
-<section id="histoire" class="slide level2 small-text-slide">
-<h2>Histoire</h2>
-<p>Les grands modèles de langage de type « encodeurs » permettent d’encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l’architecture <em>transformers</em>, qui comprend un « mécanisme d’auto-attention (self-attention mechanism) », développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d’auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l’encodage de phrases, car il permet, grâce à son architecture siamoise, d’obtenir de meilleurs embeddings et d’accélérer le calcul des similarités.</p>
-<p>Lorsqu’une entreprise s’assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n’est parfois pas évident puisque ces codes sont au nombre d’environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d’abord téléchargé le modèle pré-entrainé que nous avons finetuné sur un jeu de données interne. Le modèle entrainé permet d’obtenir, pour n’importe quelle description d’entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l’aide d’un algorithme des k plus proches voisins.</p>
+<section id="résumé" class="slide level2 small-text-slide" data-visibility="uncounted">
+<h2>Résumé</h2>
+<p>Les grands modèles de langage de type « encodeurs » permettent d’encoder des chaînes de caractères sous forme de vecteurs appelés « embeddings ». Ces modèles sont des réseaux de neurones comprenant habituellement un grand nombre de paramètres et sont pré-entraînés sur un vaste ensemble de données textuelles. La clé de leur succès réside dans l’architecture <em>transformers</em>, qui comprend un « mécanisme d’auto-attention » (self-attention mechanism), développé en 2017 dans un article intitulé « Attention is All You Need ». Ce mécanisme d’auto-attention permet, entre autres, de bien capturer le contexte des mots. Cela les rend particulièrement bien adaptés à une panoplie de tâches, y compris le calcul de similarités entre des phrases. Un modèle de langage populaire est BERT, développé par Google. Sentence-BERT représente une amélioration par rapport à BERT pour l’encodage de phrases, car il permet, grâce à son architecture siamoise, d’obtenir de meilleurs embeddings et d’accélérer le calcul des similarités.</p>
+<p>Lorsqu’une entreprise s’assure chez Co-operators, un souscripteur est chargé de lui assigner le bon code « IBC », ce qui n’est parfois pas évident puisque ces codes sont au nombre d’environ 1300. Dans un récent projet, nous avons utilisé Sentence-BERT dans un outil qui aide les souscripteurs à assigner le bon code IBC aux entreprises. Nous avons d’abord téléchargé le modèle pré-entrainé que nous avons fine-tuné sur un jeu de données interne. Le modèle entrainé permet d’obtenir, pour n’importe quelle description d’entreprise, une représentation vectorielle en 20 dimensions. Les vecteurs ainsi obtenus nous permettent de classifier les entreprises parmi les quelques 1300 codes IBC à l’aide d’un algorithme des k plus proches voisins.</p>
 </section>
-<section id="bert-2" class="slide level2">
-<h2>BERT (2)</h2>
+<section id="bert-vs-sentence-bert" class="slide level2" data-visibility="uncounted">
+<h2>BERT vs Sentence-BERT</h2>
 <p><strong>BERT</strong></p>
 <ul>
 <li>Requiert de concaténer 2 phrases pour ensuite les passer dans le modèle pour obtenir une similarité (ex: [CLS] Sentence1 [SEP] Sentence2 [SEP]).</li>
@@ -935,8 +1082,12 @@ Francis Duval, Research Scientist | Co-operators
 <li>Encode chaque phrase indépendamment en un vecteur de dimension fixe. La similarité entre 2 phrases peut ensuite être calculée, par exemple en calculant le cosinus de l’angle entre les 2 phrases (similarité cosinus).</li>
 <li>Cela réduit considérablement le temps de calcul, car on n’a pas à repasser les phrases à chaque fois dans le modèle.</li>
 </ul>
-
-<img src="images/logo_blue_2.png" class="slide-logo r-stretch"><div class="footer footer-default">
+</section>
+<section id="jeu-de-données-snli" class="slide level2" data-visibility="uncounted">
+<h2>Jeu de données SNLI</h2>
+<p><img data-src="images/examples_snli.png"></p>
+<p><img src="images/logo_blue_2.png" class="slide-logo"></p>
+<div class="footer footer-default">
 <p><a href="https://github.com/francisduval/presentation_cara_27_novembre_2024">github.com/francisduval/presentation_cara_27_novembre_2024</a></p>
 </div>
 </section></section>
