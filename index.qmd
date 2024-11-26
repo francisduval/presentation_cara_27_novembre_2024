@@ -3,7 +3,7 @@ title: 'Sentence-BERT'
 lang: fr
 subtitle: "Une application à un problème de classification d'entreprises"
 author:
-  name: Francis Duval, Research Scientist | Co-operators
+  name: Francis Duval, Chercheur Scientifique | Recherche et Innovation Analytique
   email: francis_duval@cooperators.ca
 date: 2024-11-27
 date-format: long
@@ -25,35 +25,6 @@ editor:
     wrap: 72
 include-after-body: add-custom-footer.html
 ---
-
-
-## Résumé de la présentation
-
-### 1. Sentence-BERT
-
-- Embeddings
-- BERT
-- Mécanisme d'attention
-- Pré-entrainement et fine-tuning
-- Sentence-BERT
-
-### 2. Application au problème de classification des entreprises
-
-- Télécharger le modèle pré-entrainé
-- Fine-tuning sur nos données
-- Algorithme KNN pour la classification
-
-
-::: notes
-- La première partie vise à vous familiariser avec Sentence-BERT, un modèle de langage qui permet d'obtenir des représentations vectorielles (ou embeddings) de phrases.
-- Donc on va parler d'embeddings, de BERT (qui est un modèle d'embedding de mots développé par Google) et du mécanisme d'attention, qui est central dans tous les modèles de langage modernes.
-- On va ensuite regarder comment BERT est pré-entrainé, et comment on peut le fine-tuner pour l'adapter à une tâche particulière.
-- Finalement, on va voir comment Sentence-BERT permet d'obtenir des embeddings de phrases en se basant sur BERT.
-
-- Dans la deuxième partie, on va voir comment on a utilisé Sentence-BERT comme base pour bâtir un modèle de classification d'entreprises.
-:::
-
-
 
 # 1. Sentence-BERT
 
@@ -282,14 +253,14 @@ En français, souvent traduit par **plongement** ou **représentation vectoriell
 :::
 
 
-## Sentence-BERT
+## Sentence-BERT {#id-sbert}
 
 #### Modifier BERT pour encoder des phrases
 
 ::: {.ul-font-size-medium}
 - Architecture **siamoise** à l'entrainement utilisant un modèle **BERT pré-entrainé** (les poids sont identiques dans les 2 blocs BERT).
 - La couche de **pooling** permet d'obtenir un  embedding de phrase à partir des embeddings de mots.
-- Entrainé sur le corpus SNLI: 570 000 paires de phrases annotées [**contradiction**]{style='color:#A50E0E;'}, [**implication**]{style='color:#0D652D;'} ou [**neutre**]{style='color: #a8aabc;'}.
+- Entrainé sur le corpus [SNLI](#id-SNLI): 570 000 paires de phrases annotées [**contradiction**]{style='color:#A50E0E;'}, [**implication**]{style='color:#0D652D;'} ou [**neutre**]{style='color: #a8aabc;'}.
 :::
 
 ::: columns
@@ -352,11 +323,17 @@ On peut tester le modèle [ici](https://huggingface.co/sentence-transformers/all
 
 ## Fine-tuner le modèle pré-entrainé
 
+### Résumé du problème
+
+Lorsqu'on assure une entreprise, on doit lui assigner un code parmi 1260 codes. Étant donnée une description d'entreprise, on doit assigner le bon code.
+
+::: {.fragment .fade-in}
 ### Données
+:::
 
 ::: {.fragment .fade-in-then-out}
 
-::: {style='font-size: 25px; position: absolute; top: 180px; left: 0px;'}
+::: {style='font-size: 25px; position: absolute; top: 327px; left: 0px;'}
 IBC Codes
 
 | Index | IBC Code | IBC Code Description |
@@ -373,7 +350,7 @@ IBC Codes
 
 ::: {.fragment .fade-in}
 
-::: {style='font-size: 25px; position: absolute; top: 180px; left: 0px;'}
+::: {style='font-size: 25px; position: absolute; top: 327px; left: 0px;'}
 Entreprises
 
 | Index | Company Description | IBC Code |
@@ -458,7 +435,7 @@ On va ensuite entrainer le modèle à rapprocher les [**paires positives**]{styl
 
 ## Applications possibles
 
-### BERT et Sentence-BERT
+### Ajout d'une « tête » au modèle adaptée à la tâche à accomplir.
 
 - **Classification de texte** --- Classifier des textes en différentes catégories, comme la détection de pourriels, l'analyse de sentiments, ou la classification de sujets.  
 - **Reconnaissance d'entités nommées (NER)** --- Identifier et classifier les entités nommées dans un texte, telles que les noms de personnes, d'organisations, de lieux, etc.  
@@ -501,7 +478,34 @@ Lorsqu'une entreprise s'assure chez Co-operators, un souscripteur est chargé de
 - Cela réduit considérablement le temps de calcul, car on n'a pas à repasser les phrases à chaque fois dans le modèle.
 
 
-## Jeu de données SNLI {visibility='uncounted'}
+## Jeu de données SNLI {visibility='uncounted' #id-SNLI}
 
 ![](images/examples_snli.png)
+
+[Retour à Sentence-BERT](#id-sbert)
+
+<!-- ## Résumé de la présentation -->
+
+<!-- ### 1. Sentence-BERT -->
+
+<!-- - Embeddings -->
+<!-- - BERT -->
+<!-- - Mécanisme d'attention -->
+<!-- - Pré-entrainement et fine-tuning -->
+<!-- - Sentence-BERT -->
+
+<!-- ### 2. Application au problème de classification des entreprises -->
+
+<!-- - Télécharger le modèle pré-entrainé -->
+<!-- - Fine-tuning sur nos données -->
+<!-- - Algorithme KNN pour la classification -->
+
+<!-- ::: notes -->
+<!-- - La première partie vise à vous familiariser avec Sentence-BERT, un modèle de langage qui permet d'obtenir des représentations vectorielles (ou embeddings) de phrases. -->
+<!-- - Donc on va parler d'embeddings, de BERT (qui est un modèle d'embedding de mots développé par Google) et du mécanisme d'attention, qui est central dans tous les modèles de langage modernes. -->
+<!-- - On va ensuite regarder comment BERT est pré-entrainé, et comment on peut le fine-tuner pour l'adapter à une tâche particulière. -->
+<!-- - Finalement, on va voir comment Sentence-BERT permet d'obtenir des embeddings de phrases en se basant sur BERT. -->
+
+<!-- - Dans la deuxième partie, on va voir comment on a utilisé Sentence-BERT comme base pour bâtir un modèle de classification d'entreprises. -->
+<!-- ::: -->
 
